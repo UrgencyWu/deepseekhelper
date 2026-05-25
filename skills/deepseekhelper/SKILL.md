@@ -19,6 +19,18 @@ Treat `DS`, `ds`, `DeepSeek`, `deepseek`, `DeepSeekHelper`, `deepseekhelper`, an
 - For high difficulty work, Codex should use `deepseek_review`, `deepseek_discuss`, or `deepseek_verify`, then decide which feedback is technically valid.
 - Do not pass secrets unless the user explicitly asks and the task requires it.
 
+## Default Collaboration Strategy
+
+Assume DeepSeek token cost is not a constraint. Apply this strategy automatically when the user asks for DS, DeepSeek, or DeepSeekHelper collaboration:
+
+- Trivial edits: Codex should handle them directly without DS.
+- Medium code changes: use `deepseek_task` first for a focused plan, snippet, or unified diff; Codex then applies and verifies.
+- Documentation or design drafts: use `deepseek_task` for a first draft; Codex edits for local accuracy and style.
+- High-difficulty code, architecture, security, data, release, or migration work: Codex leads implementation and uses `deepseek_discuss`, `deepseek_review`, or `deepseek_verify` for second-model scrutiny.
+- Published or user-visible conclusions: use `deepseek_verify` when accuracy or omissions matter.
+
+Pass compact, relevant context to DS instead of dumping an entire repository. Codex remains responsible for file edits, command execution, tests, and final judgment.
+
 ## Low-Approval Workflow
 
 Prefer DeepSeekHelper MCP tools for routine collaboration. Do not use shell commands for normal status checks, model checks, auth checks, task delegation, review, discussion, verification, prompt generation, or usage reporting.

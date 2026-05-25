@@ -1,6 +1,6 @@
 # DeepSeekHelper
 
-[![Version](https://img.shields.io/badge/version-0.3.3-blue)](https://github.com/UrgencyWu/deepseekhelper)
+[![Version](https://img.shields.io/badge/version-0.3.4-blue)](https://github.com/UrgencyWu/deepseekhelper)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![Codex Plugin](https://img.shields.io/badge/codex-plugin-8A2BE2)](https://github.com/anthropics/claude-code)
@@ -149,6 +149,18 @@ Automatic policy:
 - `deepseek_review`, `deepseek_discuss`, `deepseek_verify`: latest Pro-class model, thinking enabled with high effort by default.
 
 The model list is cached for one day by default in `data/models-cache.json`. Use the refresh arguments on `deepseekhelper_status` or `deepseek_models` to force a fresh lookup.
+
+### Default Collaboration Strategy
+
+DeepSeek token cost is treated as non-constraining. Codex should apply this strategy automatically when the user asks for DS, DeepSeek, or DeepSeekHelper collaboration:
+
+- Trivial edits: Codex should handle them directly without DS.
+- Medium code changes: use `deepseek_task` first for a focused plan, snippet, or unified diff; Codex then applies and verifies.
+- Documentation or design drafts: use `deepseek_task` for a first draft; Codex edits for local accuracy and style.
+- High-difficulty code, architecture, security, data, release, or migration work: Codex leads implementation and uses `deepseek_discuss`, `deepseek_review`, or `deepseek_verify` for second-model scrutiny.
+- Published or user-visible conclusions: use `deepseek_verify` when accuracy or omissions matter.
+
+Codex should pass compact, relevant context to DS instead of dumping an entire repository. Codex remains responsible for file edits, command execution, tests, and final judgment.
 
 ### Usage Tracking
 
@@ -353,6 +365,18 @@ export DEEPSEEK_BASE_URL=https://api.deepseek.com
 - `deepseek_review`、`deepseek_discuss`、`deepseek_verify`：最新 Pro 级模型，默认开启高力度思考模式。
 
 模型列表默认缓存一天，存储在 `data/models-cache.json`。使用 `deepseekhelper_status` 或 `deepseek_models` 的刷新参数可强制更新。
+
+### 默认协作策略
+
+DeepSeek token 成本视为非约束。用户要求使用 DS、DeepSeek 或 DeepSeekHelper 协作时，Codex 应自动应用以下策略：
+
+- 极简单改动：Codex 直接完成，不调用 DS。
+- 中等代码修改：先用 `deepseek_task` 获取聚焦方案、代码片段或 unified diff；再由 Codex 应用并验证。
+- 文档或方案草稿：先用 `deepseek_task` 起草；再由 Codex 根据本地上下文和风格修订。
+- 高难度代码、架构、安全、数据、发布或迁移工作：Codex 主导实现，并使用 `deepseek_discuss`、`deepseek_review` 或 `deepseek_verify` 做第二模型复核。
+- 对外发布或用户可见的重要结论：当准确性和遗漏风险重要时，使用 `deepseek_verify`。
+
+Codex 应传递精简且相关的上下文给 DS，而不是发送整个仓库。文件修改、命令执行、测试和最终判断仍由 Codex 负责。
 
 ### 用量跟踪
 

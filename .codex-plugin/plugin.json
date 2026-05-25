@@ -1,6 +1,6 @@
 {
   "name": "deepseekhelper",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Adds DeepSeek-powered supervised task, review, discussion, verification, model selection, usage tracking, and explicit update tools for Codex.",
   "author": {
     "name": "DeepSeekHelper contributors"
@@ -13,7 +13,7 @@
     "developerName": "DeepSeekHelper contributors",
     "category": "Productivity",
     "capabilities": ["mcp"],
-    "defaultPrompt": "Use DeepSeekHelper when DeepSeek should help with supervised tasks, review or verify higher difficulty work, report usage, or explicitly check for plugin updates."
+    "defaultPrompt": "Use DeepSeekHelper with its default collaboration strategy for supervised tasks, reviews, verification, usage, or updates."
   },
   "mcpServers": "./.mcp.json"
 }

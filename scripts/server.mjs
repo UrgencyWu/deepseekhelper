@@ -84,7 +84,7 @@ const client = new OpenAI({
 
 const server = new McpServer({
   name: "deepseekhelper",
-  version: "0.3.3",
+  version: "0.3.4",
 });
 
 function sanitizeErrorMessage(error) {
