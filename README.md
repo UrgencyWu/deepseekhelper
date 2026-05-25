@@ -1,5 +1,14 @@
 # DeepSeekHelper
 
+[![Version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/UrgencyWu/deepseekhelper)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+[![Codex Plugin](https://img.shields.io/badge/codex-plugin-8A2BE2)](https://github.com/anthropics/claude-code)
+
+<p align="center">
+  <img src="assets/banner.svg" alt="DeepSeekHelper banner" width="800">
+</p>
+
 [English](#english) | [中文](#中文)
 
 A [Codex](https://github.com/anthropics/claude-code) plugin that exposes DeepSeek-powered MCP tools for supervised collaboration. Codex delegates, reviews, discusses, and verifies work with DeepSeek while keeping final edits, tests, and judgment inside Codex.
