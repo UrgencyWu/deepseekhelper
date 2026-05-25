@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "deepseekhelper": {
+      "command": "node",
+      "args": [
+        "scripts/server.mjs"
+      ]
+    }
+  }
+}
