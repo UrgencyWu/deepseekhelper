@@ -19,8 +19,15 @@ A [Codex](https://github.com/anthropics/claude-code) plugin that exposes DeepSee
 
 ---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=UrgencyWu/deepseekhelper&type=Date)](https://star-history.com/#UrgencyWu/deepseekhelper&Date)
+## Star History
 
+<a href="https://www.star-history.com/?type=date&repos=UrgencyWu%2Fdeepseekhelper">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=UrgencyWu/deepseekhelper&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=UrgencyWu/deepseekhelper&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=UrgencyWu/deepseekhelper&type=date&legend=top-left" />
+ </picture>
+</a>
 ---
 
 ## English
