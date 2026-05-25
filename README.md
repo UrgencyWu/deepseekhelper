@@ -10,6 +10,10 @@ A [Codex](https://github.com/anthropics/claude-code) plugin that exposes DeepSee
 
 ---
 
+[![Star History Chart](https://api.star-history.com/svg?repos=UrgencyWu/deepseekhelper&type=Date)](https://star-history.com/#UrgencyWu/deepseekhelper&Date)
+
+---
+
 ## English
 
 ### About
