@@ -1,11 +1,14 @@
 import { mkdir, readFile, writeFile, appendFile } from "node:fs/promises";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import OpenAI from "openai";
 import { z } from "zod";
+
+const execFileAsync = promisify(execFile);
 
 function readLaunchctlEnv(name) {
   if (process.platform !== "darwin") return "";
@@ -81,7 +84,7 @@ const client = new OpenAI({
 
 const server = new McpServer({
   name: "deepseekhelper",
-  version: "0.3.2",
+  version: "0.3.3",
 });
 
 function sanitizeErrorMessage(error) {
@@ -107,6 +110,100 @@ async function readJsonFile(filePath) {
 async function writeJsonFile(filePath, value) {
   await ensureDataDir();
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+}
+
+async function runCommand(command, args, options = {}) {
+  try {
+    const result = await execFileAsync(command, args, {
+      cwd: pluginDir,
+      timeout: options.timeout || 60_000,
+      maxBuffer: options.maxBuffer || 1024 * 1024,
+      env: process.env,
+    });
+    return {
+      ok: true,
+      stdout: result.stdout.trim(),
+      stderr: result.stderr.trim(),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      stdout: error.stdout?.trim?.() || "",
+      stderr: error.stderr?.trim?.() || "",
+      error: sanitizeErrorMessage(error),
+      code: error.code ?? null,
+    };
+  }
+}
+
+async function git(args, options = {}) {
+  return runCommand("git", args, options);
+}
+
+async function npm(args, options = {}) {
+  return runCommand("npm", args, { timeout: 180_000, ...options });
+}
+
+function commandOutput(result) {
+  return [result.stdout, result.stderr, result.error].filter(Boolean).join("\n").trim();
+}
+
+async function getPackageVersion() {
+  const pkg = await readJsonFile(path.join(pluginDir, "package.json"));
+  return pkg?.version || "unknown";
+}
+
+async function currentHead() {
+  const result = await git(["rev-parse", "--short", "HEAD"]);
+  return result.ok ? result.stdout : "unknown";
+}
+
+async function currentBranch() {
+  const result = await git(["branch", "--show-current"]);
+  return result.ok ? result.stdout : "unknown";
+}
+
+async function upstreamRef() {
+  const result = await git(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"]);
+  return result.ok ? result.stdout : null;
+}
+
+async function workingTreeStatus() {
+  const result = await git(["status", "--porcelain"]);
+  if (!result.ok) {
+    return {
+      clean: false,
+      status: commandOutput(result) || "Unable to read git status.",
+    };
+  }
+  return {
+    clean: result.stdout.length === 0,
+    status: result.stdout,
+  };
+}
+
+async function gitFileSha(ref, filePath) {
+  const result = await git(["rev-parse", `${ref}:${filePath}`]);
+  return result.ok ? result.stdout : null;
+}
+
+async function updateSnapshot() {
+  const [version, head, branch, upstream, tree] = await Promise.all([
+    getPackageVersion(),
+    currentHead(),
+    currentBranch(),
+    upstreamRef(),
+    workingTreeStatus(),
+  ]);
+
+  return {
+    version,
+    head,
+    branch,
+    upstream,
+    clean: tree.clean,
+    status: tree.status,
+  };
 }
 
 function isFreshCache(cache, now = Date.now()) {
@@ -731,6 +828,146 @@ server.tool(
         },
       ],
     };
+  }
+);
+
+server.tool(
+  "deepseek_update_check",
+  "Check whether DeepSeekHelper can be updated from its git upstream without modifying files.",
+  {
+    fetch: z
+      .boolean()
+      .optional()
+      .describe("Set true to fetch the upstream before comparing. This performs network I/O but does not modify files."),
+  },
+  async ({ fetch }) => {
+    const before = await updateSnapshot();
+    const lines = [
+      "DeepSeekHelper update check",
+      `Plugin directory: ${pluginDir}`,
+      `Version: ${before.version}`,
+      `Branch: ${before.branch}`,
+      `HEAD: ${before.head}`,
+      `Upstream: ${before.upstream || "(none)"}`,
+      `Working tree: ${before.clean ? "clean" : "dirty"}`,
+    ];
+
+    if (!before.upstream) {
+      lines.push("Update status: unavailable because no git upstream is configured.");
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+
+    if (!before.clean) {
+      lines.push("Local changes:");
+      lines.push(before.status);
+      lines.push("Update status: blocked until local changes are committed, stashed, or discarded by the user.");
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+
+    if (fetch) {
+      const fetchResult = await git(["fetch", "--prune"]);
+      if (!fetchResult.ok) {
+        lines.push(`Fetch: failed\n${commandOutput(fetchResult)}`);
+        return { content: [{ type: "text", text: lines.join("\n") }] };
+      }
+      lines.push("Fetch: ok");
+    } else {
+      lines.push("Fetch: skipped; pass fetch=true to refresh remote state.");
+    }
+
+    const aheadBehind = await git(["rev-list", "--left-right", "--count", "HEAD...@{u}"]);
+    if (!aheadBehind.ok) {
+      lines.push(`Compare: failed\n${commandOutput(aheadBehind)}`);
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+
+    const [ahead, behind] = aheadBehind.stdout.split(/\s+/).map((value) => Number(value || 0));
+    lines.push(`Ahead: ${ahead}`);
+    lines.push(`Behind: ${behind}`);
+    lines.push(
+      behind > 0
+        ? "Update status: update available. Call deepseek_update_apply to fast-forward."
+        : "Update status: already up to date."
+    );
+
+    return { content: [{ type: "text", text: lines.join("\n") }] };
+  }
+);
+
+server.tool(
+  "deepseek_update_apply",
+  "Update DeepSeekHelper from its git upstream with a fast-forward pull. This only runs when explicitly called.",
+  {
+    install_dependencies: z
+      .boolean()
+      .optional()
+      .describe("Set true to run npm install if package.json or package-lock.json changed."),
+  },
+  async ({ install_dependencies }) => {
+    const before = await updateSnapshot();
+    const lines = [
+      "DeepSeekHelper update apply",
+      `Plugin directory: ${pluginDir}`,
+      `Starting version: ${before.version}`,
+      `Starting HEAD: ${before.head}`,
+      `Branch: ${before.branch}`,
+      `Upstream: ${before.upstream || "(none)"}`,
+    ];
+
+    if (!before.upstream) {
+      lines.push("Update refused: no git upstream is configured.");
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+
+    if (!before.clean) {
+      lines.push("Update refused: working tree has local changes.");
+      lines.push(before.status);
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+
+    const beforePackageSha = await gitFileSha("HEAD", "package.json");
+    const beforeLockSha = await gitFileSha("HEAD", "package-lock.json");
+
+    const fetchResult = await git(["fetch", "--prune"]);
+    if (!fetchResult.ok) {
+      lines.push(`Fetch failed:\n${commandOutput(fetchResult)}`);
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+    lines.push("Fetch: ok");
+
+    const pullResult = await git(["pull", "--ff-only"]);
+    if (!pullResult.ok) {
+      lines.push(`Pull failed:\n${commandOutput(pullResult)}`);
+      return { content: [{ type: "text", text: lines.join("\n") }] };
+    }
+    lines.push(`Pull: ok${pullResult.stdout ? `\n${pullResult.stdout}` : ""}`);
+
+    const after = await updateSnapshot();
+    const afterPackageSha = await gitFileSha("HEAD", "package.json");
+    const afterLockSha = await gitFileSha("HEAD", "package-lock.json");
+    const dependencyFilesChanged =
+      beforePackageSha !== afterPackageSha || beforeLockSha !== afterLockSha;
+
+    lines.push(`Updated version: ${after.version}`);
+    lines.push(`Updated HEAD: ${after.head}`);
+    lines.push(`Dependency files changed: ${dependencyFilesChanged ? "yes" : "no"}`);
+
+    if (dependencyFilesChanged) {
+      if (install_dependencies) {
+        const installResult = await npm(["install"]);
+        if (!installResult.ok) {
+          lines.push(`npm install failed:\n${commandOutput(installResult)}`);
+          lines.push("Codex should not use the updated plugin until dependencies are fixed.");
+          return { content: [{ type: "text", text: lines.join("\n") }] };
+        }
+        lines.push("npm install: ok");
+      } else {
+        lines.push("npm install: skipped; call again with install_dependencies=true if dependency files changed.");
+      }
+    }
+
+    lines.push("Reload or restart Codex so the MCP server uses the updated plugin code.");
+    return { content: [{ type: "text", text: lines.join("\n") }] };
   }
 );
 
