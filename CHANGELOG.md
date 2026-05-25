@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3 — 2026-05-25
+
+- Two new tools: `deepseek_update_check` and `deepseek_update_apply` for explicit git upstream update management.
+- Plugin alias support: `DS`, `ds`, `DeepSeek`, `deepseek`, `DeepSeekHelper`, `deepseekhelper`, and `DeepSeek Helper` are equivalent names (case-insensitive).
+- Low-approval workflow guidance: MCP tools for everyday use, shell commands only for explicit setup/audit/release work.
+- Update safety: `deepseek_update_apply` refuses dirty working trees and uses `--ff-only` pulls.
+
 ## 0.3.2 — 2026-05-25
 
 - First public release.

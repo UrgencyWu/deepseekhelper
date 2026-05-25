@@ -1,6 +1,6 @@
 # DeepSeekHelper
 
-[![Version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/UrgencyWu/deepseekhelper)
+[![Version](https://img.shields.io/badge/version-0.3.3-blue)](https://github.com/UrgencyWu/deepseekhelper)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
 [![Codex Plugin](https://img.shields.io/badge/codex-plugin-8A2BE2)](https://github.com/anthropics/claude-code)
@@ -27,7 +27,7 @@ A [Codex](https://github.com/anthropics/claude-code) plugin that exposes DeepSee
 
 ### About
 
-DeepSeekHelper adds ten local MCP tools to Codex, each wrapping the DeepSeek API with structured supervision boundaries:
+DeepSeekHelper adds twelve local MCP tools to Codex, each wrapping the DeepSeek API with structured supervision boundaries:
 
 `DS`, `ds`, `DeepSeek`, `deepseek`, `DeepSeekHelper`, `deepseekhelper`, and `DeepSeek Helper` are equivalent names in everyday prompts. Alias matching is case-insensitive. For example, "Ask DS to review this diff" and "ask deepseek to review this diff" should trigger the same workflow as "Ask DeepSeekHelper to review this diff."
 
@@ -231,7 +231,7 @@ MIT
 
 ### 关于
 
-DeepSeekHelper 为 Codex 提供了十个本地 MCP 工具，每个工具封装了 DeepSeek API，并带有结构化的监督边界：
+DeepSeekHelper 为 Codex 提供了十二个本地 MCP 工具，每个工具封装了 DeepSeek API，并带有结构化的监督边界：
 
 在日常提示中，`DS`、`ds`、`DeepSeek`、`deepseek`、`DeepSeekHelper`、`deepseekhelper` 和 `DeepSeek Helper` 都表示同一个插件。别名匹配不区分大小写。例如“让 DS 复核这个 diff”、“让 deepseek 复核这个 diff”和“让 DeepSeekHelper 复核这个 diff”应触发相同工作流。
 
