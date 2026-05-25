@@ -24,7 +24,7 @@ Codex can use DeepSeekHelper to delegate low or medium difficulty coding, docume
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/YOUR_USER_OR_ORG/deepseekhelper.git
+git clone https://github.com/UrgencyWu/deepseekhelper.git
 cd deepseekhelper
 npm install
 ```
